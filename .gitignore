@@ -21,3 +21,4 @@ pnpm-debug.log*
 data/database.db
 data/database.db-shm
 data/database.db-walbackups/
+data/
