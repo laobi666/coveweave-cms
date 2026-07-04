@@ -20,4 +20,4 @@ pnpm-debug.log*
 # SQLite database
 data/database.db
 data/database.db-shm
-data/database.db-wal
+data/database.db-walbackups/
