@@ -1,54 +1,81 @@
+import db from "@/lib/db";
 import Link from "next/link";
 
-const cards = [
-  {
-    title: "Images",
-    description: "Upload and manage website images.",
-    href: "/dashboard/images",
-  },
-  {
-    title: "Products",
-    description: "Manage product information.",
-    href: "/dashboard/products",
-  },
-  {
-    title: "Pages",
-    description: "Edit website pages.",
-    href: "/dashboard/pages",
-  },
-  {
-    title: "Settings",
-    description: "Website settings.",
-    href: "/dashboard/settings",
-  },
-];
+type Product = {
+  id: number;
+  name: string;
+  description: string | null;
+  filename: string | null;
+};
 
-export default function DashboardPage() {
+export default function ProductsPage() {
+  const products = db
+    .prepare(
+      `
+      SELECT
+        products.id,
+        products.name,
+        products.description,
+        images.filename
+      FROM products
+      LEFT JOIN images
+      ON products.image_id = images.id
+      WHERE products.visible = 1
+      ORDER BY products.sort_order ASC,
+               products.id DESC
+      `
+    )
+    .all() as Product[];
+
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
+    <main className="mx-auto max-w-7xl px-6 py-16">
+      <div className="mb-12">
+        <h1 className="text-4xl font-bold">
+          Products
+        </h1>
 
-      <p className="mt-2 text-gray-500">
-        Welcome to CoveWeave CMS.
-      </p>
-
-      <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <Link
-            key={card.title}
-            href={card.href}
-            className="rounded-xl border bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-          >
-            <h2 className="text-xl font-semibold">
-              {card.title}
-            </h2>
-
-            <p className="mt-3 text-sm text-gray-500">
-              {card.description}
-            </p>
-          </Link>
-        ))}
+        <p className="mt-4 text-gray-500">
+          Explore our product collection.
+        </p>
       </div>
-    </div>
+
+      {products.length === 0 ? (
+        <div className="rounded border p-12 text-center text-gray-500">
+          No products.
+        </div>
+      ) : (
+        <div className="grid gap-8 md:grid-cols-3">
+          {products.map((product) => (
+            <Link
+              key={product.id}
+              href={`/products/${product.id}`}
+              className="group overflow-hidden rounded-xl border bg-white"
+            >
+              {product.filename ? (
+                <img
+                  src={`/uploads/thumbs/${product.filename}`}
+                  alt={product.name}
+                  className="aspect-square w-full object-cover transition group-hover:scale-105"
+                />
+              ) : (
+                <div className="flex aspect-square items-center justify-center bg-gray-100 text-gray-400">
+                  No Image
+                </div>
+              )}
+
+              <div className="p-5">
+                <h2 className="text-xl font-semibold">
+                  {product.name}
+                </h2>
+
+                <p className="mt-2 line-clamp-2 text-gray-500">
+                  {product.description}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </main>
   );
 }

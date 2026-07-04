@@ -3,11 +3,21 @@ import db from "@/lib/db";
 import { saveImage, deleteImage } from "@/lib/image";
 
 export async function GET() {
-  const images = db.prepare(`
-    SELECT *
-    FROM images
-    ORDER BY id DESC
-  `).all();
+  const images = db
+    .prepare(
+      `
+      SELECT
+        id,
+        filename,
+        width,
+        height,
+        size,
+        created_at
+      FROM images
+      ORDER BY id DESC
+      `
+    )
+    .all();
 
   return NextResponse.json(images);
 }
@@ -19,8 +29,12 @@ export async function POST(request: NextRequest) {
 
   if (!(file instanceof File)) {
     return NextResponse.json(
-      { error: "No file" },
-      { status: 400 }
+      {
+        error: "No image uploaded",
+      },
+      {
+        status: 400,
+      }
     );
   }
 
@@ -30,27 +44,31 @@ export async function POST(request: NextRequest) {
 
   const image = await saveImage(buffer);
 
-  const result = db.prepare(`
-    INSERT INTO images
-    (
-      filename,
-      width,
-      height,
-      size
+  const result = db
+    .prepare(
+      `
+      INSERT INTO images
+      (
+        filename,
+        width,
+        height,
+        size
+      )
+      VALUES
+      (
+        ?,
+        ?,
+        ?,
+        ?
+      )
+      `
     )
-    VALUES
-    (
-      ?,
-      ?,
-      ?,
-      ?
-    )
-  `).run(
-    image.filename,
-    image.width,
-    image.height,
-    image.size
-  );
+    .run(
+      image.filename,
+      image.width,
+      image.height,
+      image.size
+    );
 
   return NextResponse.json({
     success: true,
@@ -64,27 +82,50 @@ export async function DELETE(request: NextRequest) {
     new URL(request.url).searchParams.get("id")
   );
 
-  const image = db.prepare(`
-    SELECT *
-    FROM images
-    WHERE id=?
-  `).get(id) as
-    | { filename: string }
+  if (!id) {
+    return NextResponse.json(
+      {
+        error: "Invalid id",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  const image = db
+    .prepare(
+      `
+      SELECT filename
+      FROM images
+      WHERE id=?
+      `
+    )
+    .get(id) as
+    | {
+        filename: string;
+      }
     | undefined;
 
   if (!image) {
     return NextResponse.json(
-      { error: "Not found" },
-      { status: 404 }
+      {
+        error: "Image not found",
+      },
+      {
+        status: 404,
+      }
     );
   }
 
   await deleteImage(image.filename);
 
-  db.prepare(`
+  db.prepare(
+    `
     DELETE FROM images
     WHERE id=?
-  `).run(id);
+    `
+  ).run(id);
 
   return NextResponse.json({
     success: true,
