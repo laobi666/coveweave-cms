@@ -1,28 +1,48 @@
+import Link from "next/link";
+
 export default function Sidebar() {
   return (
-    <aside className="w-64 border-r bg-gray-50 p-6">
-      <h2 className="mb-6 text-xl font-bold">CoveWeave CMS</h2>
+    <aside className="w-60 min-h-screen border-r bg-white p-6">
+      <div className="mb-8">
+        <h2 className="text-xl font-bold">
+          CoveWeave CMS
+        </h2>
+
+        <p className="text-sm text-gray-500">
+          Admin Panel
+        </p>
+      </div>
 
       <nav className="space-y-3">
-        <a className="block" href="/dashboard">
+
+        <Link
+          href="/dashboard"
+          className="block hover:underline"
+        >
           Dashboard
-        </a>
+        </Link>
 
-        <a className="block" href="/dashboard/images">
-          Images
-        </a>
-
-        <a className="block" href="/dashboard/products">
+        <Link
+          href="/dashboard/products"
+          className="block hover:underline"
+        >
           Products
-        </a>
+        </Link>
 
-        <a className="block" href="/dashboard/pages">
-          Pages
-        </a>
+        <Link
+          href="/dashboard/images"
+          className="block hover:underline"
+        >
+          Images
+        </Link>
 
-        <a className="block" href="/dashboard/settings">
-          Settings
-        </a>
+        <Link
+          href="/dashboard/content"
+          className="block hover:underline"
+        >
+          Content
+        </Link>
+
       </nav>
     </aside>
   );
