@@ -1,49 +1,90 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getImage, deleteImageRecord } from "@/lib/db/image";
-import { deleteImage } from "@/lib/image";
+import db from "@/lib/db";
+import { saveImage, deleteImage } from "@/lib/image";
 
-type Params = {
-  params: Promise<{
-    id: string;
-  }>;
-};
+export async function GET() {
+  const images = db.prepare(`
+    SELECT *
+    FROM images
+    ORDER BY id DESC
+  `).all();
 
-export async function GET(
-  request: NextRequest,
-  { params }: Params
-) {
-  const { id } = await params;
+  return NextResponse.json(images);
+}
 
-  const image = getImage(Number(id));
+export async function POST(request: NextRequest) {
+  const formData = await request.formData();
 
-  if (!image) {
+  const file = formData.get("file");
+
+  if (!(file instanceof File)) {
     return NextResponse.json(
-      { error: "Not Found" },
-      { status: 404 }
+      { error: "No file" },
+      { status: 400 }
     );
   }
 
-  return NextResponse.json(image);
+  const buffer = Buffer.from(
+    await file.arrayBuffer()
+  );
+
+  const image = await saveImage(buffer);
+
+  const result = db.prepare(`
+    INSERT INTO images
+    (
+      filename,
+      width,
+      height,
+      size
+    )
+    VALUES
+    (
+      ?,
+      ?,
+      ?,
+      ?
+    )
+  `).run(
+    image.filename,
+    image.width,
+    image.height,
+    image.size
+  );
+
+  return NextResponse.json({
+    success: true,
+    id: result.lastInsertRowid,
+    image,
+  });
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: Params
-) {
-  const { id } = await params;
+export async function DELETE(request: NextRequest) {
+  const id = Number(
+    new URL(request.url).searchParams.get("id")
+  );
 
-  const image = getImage(Number(id));
+  const image = db.prepare(`
+    SELECT *
+    FROM images
+    WHERE id=?
+  `).get(id) as
+    | { filename: string }
+    | undefined;
 
   if (!image) {
     return NextResponse.json(
-      { error: "Not Found" },
+      { error: "Not found" },
       { status: 404 }
     );
   }
 
   await deleteImage(image.filename);
 
-  deleteImageRecord(Number(id));
+  db.prepare(`
+    DELETE FROM images
+    WHERE id=?
+  `).run(id);
 
   return NextResponse.json({
     success: true,
