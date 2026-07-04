@@ -1,3 +1,9 @@
-export default function Page() {
-  return <main>Coming Soon</main>;
+import Hero from "@/components/frontend/Hero";
+
+export default function HomePage() {
+  return (
+    <>
+      <Hero />
+    </>
+  );
 }
