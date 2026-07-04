@@ -17,3 +17,7 @@ public/uploads/thumbs/*
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
+# SQLite database
+data/database.db
+data/database.db-shm
+data/database.db-wal
